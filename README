@@ -1,0 +1,82 @@
+GPGlist -- Encrypted alias lists
+
+Programmed by Bastian Ballmann
+E-Mail: Crazydj@chaostal.de
+Web: http://www.datenterrorist.de
+
+
+
+////[ Description ]////
+
+This script should be used in alias files like in sendmail
+or postfix and possibly other MTAs to implement GPG encrypted
+mailing lists.
+It's based on the code of Francisco Jesus Monserrat Coll
+http://www.rediris.es/app/pgplist/index.en.html
+But it's a complete rewrite from scratch!
+
+Basically it consists of 2 components.
+A central configfile (/etc/gpglist.conf per default) which 
+contains paths, tempdir, logfile config and such stuff and
+the information about list(s) and member(s) and there addresses
+and pgp keys.
+A directory were the gpg keyring of the list is stored.
+
+
+
+////[ Installation ]////
+
+Install the XML::Simple Perl module. You need the development files
+of the expat xml parser to do so!
+The easiest way to install the module is by executing the following
+as root:
+
+perl -MCPAN -eshell
+cpan> install XML::Simple
+
+Or point your browser to cpan.org and download and install the module
+as described in the modules readme file.
+
+Next copy the gpglist.conf to /etc and edit it.
+Create a directory to store list information e.g. /etc/lists.
+
+Now create directory to store the gpg key ring e.g. /etc/lists/test_keys.
+Create a new keyring: gpg --homedir /etc/lists/test_keys --gen-key
+
+Export the public key of the list and distribute it to the members
+of the list. Remember unencrypted mails will be rejected!
+gpg --export -a
+
+Now it's time to import the public keys of your list members:
+gpg --homedir /etc/lists/test_keys --import member.key
+Don't forget to add this key id to example.list.
+
+Chown all files and directory for the user of your mailing list!
+Create the logfile specified in /etc/gpglist.conf and be sure, that the 
+user of the mail daemon can write to it.
+
+If you're using Sendmail and using smrsh, than you have to allow
+Sendmail to execute your script. On Debian you have to create a symlink
+to this script in /etc/mail/smrsh.
+strings /path/to/smrsh | grep ^/
+This command should show you the link directory.
+
+Last but not least edit your alias file and create the list alias:
+test:		"|/path/to/gpglist.pl list"
+
+Now send an email to the list and watch the logfile.
+
+
+
+////[ Troubleshooting ]////
+
+Be sure that you really know the user id that will execute the script!
+If you want check the uid edit the perl code and print $> to the logfile
+(see at the bottom of the script).
+
+Be also absolutely sure that this uid can read and write all necessary files,
+that are all created files and directories!
+
+Edit the code and comment out the unlink() calls.
+Now you can examine the encrypted and decrypted mail or check the output of 
+gnupg depending on where the error occured.
